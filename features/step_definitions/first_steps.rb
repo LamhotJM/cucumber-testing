@@ -1,40 +1,86 @@
-Given(/^I print in the terminal Hello World$/) do
-  puts "Hello World!!!"
+Then(/^buyer buy product from SS$/) do
+  user_register
+  sleep 2
+  visit '/products/category/new-arrivals'
+  @Count = 1
+  sleep 1
+  while @Count < 10
+    add_to_cart
+    @Count += 1
+  end
+  visit '/cart'
+  if page.has_css?(' #main>div>div>div>div>div>p')
+    user_register
+  else
+    register_step_one
+    register_step_two
+  end
 end
 
-Given(/^my name is "(.*?)"$/) do |name|
-  puts name
+def add_to_cart
+  first('#main>div>div>div>div>div>div>div>div>div>div>button').click
+  sleep 2
+  first(:xpath,'.//*[@id]/div/div[2]/div[1]/a').click
+  sleep 1
 end
 
-When(/^my last name is "([^"]*)"$/) do |last_name|
-  puts last_name
+def user_register
+  visit '/account/register'
+  @phoneNumber=rand.to_s[2..15]
+  find('#phoneNumber').set("0823#{@phoneNumber}")
+  find('#email').set(@email=create_email.to_s)
+  find('#password').set(SecureRandom.hex(10))
+  find('.col.col--12>button').click
 end
 
-When (/^I open the "([^"]*)" in a browser$/) do |url|
-  @browser.navigate.to url
+def register_step_one
+  find('#main>div>div>div>div>div>button').click
+  @alamat_buyer="Jl Pilar Mas Raya Kav. A-D, Kedoya - Kebon Jeruk Jakarta 11520 - Indonesia"
+  find('#billing_name').set(@full_name)
+  find('#billing_streetAddress').set(@alamat_buyer)
+  sleep 1
+  #select 'DKI Jakarta', from: 'billing_province',visible: false
+  find('#billing_province').click
+  sleep 1
+  expect(page).to have_selector(:xpath, ".//*[@id='billing_province']/option[7]", wait: 5)
+  find(:xpath,".//*[@id='billing_province']/option[7]",visible: false).click
+  expect(page).to have_selector(:css, "#billing_city", wait: 5)
+  find('#billing_city').click
+  sleep 1
+  find(:xpath,".//*[@id='billing_city']/option[2]").click
+  expect(page).to have_selector(:css, "#billing_district", wait: 5)
+  find('#billing_district').click
+  sleep 1
+  find(:xpath,".//*[@id='billing_district']/option[5]").click
+  expect(page).to have_selector(:css, "#billing_subDistrict", wait: 5)
+  find('#billing_subDistrict').click
+  sleep 1
+  find(:xpath,".//*[@id='billing_subDistrict']/option[3]").click
+  sleep 1
+  find('.SwipeView>div>div>div>div>div>form>div>button').click
+  sleep 10
 end
 
-When(/^I search for "([^"]*)" in google search$/) do |search_term|
-  @browser.find_element(:id, "gbqfq").send_keys search_term
+def register_step_two
+  first('.SwipeView>div>div>div>div>div>form>div>div>div>div>div>label>span').click
+  find('.SwipeView>div>div>div>div>div>form>div>div>button').click
+  find('.SwipeView>div>div>div>div>div>button').click
+  sleep 1
 end
 
-Then(/^I click on a search button$/) do
-  @browser.find_element(:id, "gbqfb").click
+def create_email
+  data_fake
+  @provider = ['yhoo','gmbukanmail','asal','gmail'].sample
+  @email=@firstname+"_"+@lastname+@number.to_s+"@"+@provider+".com"
 end
 
-When(/^I click on Sign in button$/) do
-  @browser.find_element(:id, "gb_70").click
+def create_name
+  data_fake
+  @full_name=@firstname+"_"+@lastname+@number.to_s
 end
 
-When(/^I type my email "([^"]*)" and password "([^"]*)"$/) do |login, password|
-  @browser.find_element(:id, "Email").send_keys login
-  @browser.find_element(:id, "Passwd").send_keys password
-end
-
-When(/^I click on Sign in button on login page$/) do
-  @browser.find_element(:id, "signIn").click
-end
-
-Then(/^I will see "([^"]*)" in signed section$/) do |email|
-  @browser.find_element(:css, "a.gb_q.gb_O.gb_j.gb_K").text.should == email
+def data_fake
+  @firstname = ['Harun','Nani','Komuja','Devita','Purna','Delete','Iam Tri'].sample
+  @lastname = ['nana','nano','lolo','hal','buana','devina','hdr'].sample
+  @number = SecureRandom.hex(7)
 end
